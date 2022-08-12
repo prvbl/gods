@@ -45,3 +45,8 @@ func ToString(value interface{}) string {
 		return fmt.Sprintf("%+v", value)
 	}
 }
+
+func ZeroValue[T any]() T {
+	var v T
+	return v
+}

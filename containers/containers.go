@@ -16,17 +16,17 @@ package containers
 import "github.com/emirpasic/gods/utils"
 
 // Container is base interface that all data structures implement.
-type Container interface {
+type Container[V any] interface {
 	Empty() bool
 	Size() int
 	Clear()
-	Values() []interface{}
+	Values() []V
 	String() string
 }
 
 // GetSortedValues returns sorted container's elements with respect to the passed comparator.
 // Does not affect the ordering of elements within the container.
-func GetSortedValues(container Container, comparator utils.Comparator) []interface{} {
+func GetSortedValues[V comparable](container Container[V], comparator utils.Comparator) []V {
 	values := container.Values()
 	if len(values) < 2 {
 		return values

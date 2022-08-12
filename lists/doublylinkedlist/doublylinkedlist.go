@@ -18,24 +18,24 @@ import (
 )
 
 // Assert List implementation
-var _ lists.List = (*List)(nil)
+var _ lists.List[string] = (*List[string])(nil)
 
 // List holds the elements, where each element points to the next and previous element
-type List struct {
-	first *element
-	last  *element
+type List[V comparable] struct {
+	first *element[V]
+	last  *element[V]
 	size  int
 }
 
-type element struct {
-	value interface{}
-	prev  *element
-	next  *element
+type element[V comparable] struct {
+	value V
+	prev  *element[V]
+	next  *element[V]
 }
 
 // New instantiates a new list and adds the passed values, if any, to the list
-func New(values ...interface{}) *List {
-	list := &List{}
+func New[V comparable](values ...V) *List[V] {
+	list := &List[V]{}
 	if len(values) > 0 {
 		list.Add(values...)
 	}
@@ -43,9 +43,9 @@ func New(values ...interface{}) *List {
 }
 
 // Add appends a value (one or more) at the end of the list (same as Append())
-func (list *List) Add(values ...interface{}) {
+func (list *List[V]) Add(values ...V) {
 	for _, value := range values {
-		newElement := &element{value: value, prev: list.last}
+		newElement := &element[V]{value: value, prev: list.last}
 		if list.size == 0 {
 			list.first = newElement
 			list.last = newElement
@@ -58,15 +58,15 @@ func (list *List) Add(values ...interface{}) {
 }
 
 // Append appends a value (one or more) at the end of the list (same as Add())
-func (list *List) Append(values ...interface{}) {
+func (list *List[V]) Append(values ...V) {
 	list.Add(values...)
 }
 
 // Prepend prepends a values (or more)
-func (list *List) Prepend(values ...interface{}) {
+func (list *List[V]) Prepend(values ...V) {
 	// in reverse to keep passed order i.e. ["c","d"] -> Prepend(["a","b"]) -> ["a","b","c",d"]
 	for v := len(values) - 1; v >= 0; v-- {
-		newElement := &element{value: values[v], next: list.first}
+		newElement := &element[V]{value: values[v], next: list.first}
 		if list.size == 0 {
 			list.first = newElement
 			list.last = newElement
@@ -80,10 +80,10 @@ func (list *List) Prepend(values ...interface{}) {
 
 // Get returns the element at index.
 // Second return parameter is true if index is within bounds of the array and array is not empty, otherwise false.
-func (list *List) Get(index int) (interface{}, bool) {
+func (list *List[V]) Get(index int) (V, bool) {
 
 	if !list.withinRange(index) {
-		return nil, false
+		return utils.ZeroValue[V](), false
 	}
 
 	// determine traveral direction, last to first or first to last
@@ -100,7 +100,7 @@ func (list *List) Get(index int) (interface{}, bool) {
 }
 
 // Remove removes the element at the given index from the list.
-func (list *List) Remove(index int) {
+func (list *List[V]) Remove(index int) {
 
 	if !list.withinRange(index) {
 		return
@@ -111,7 +111,7 @@ func (list *List) Remove(index int) {
 		return
 	}
 
-	var element *element
+	var element *element[V]
 	// determine traversal direction, last to first or first to last
 	if list.size-index < index {
 		element = list.last
@@ -145,7 +145,7 @@ func (list *List) Remove(index int) {
 // All values have to be present in the set for the method to return true.
 // Performance time complexity of n^2.
 // Returns true if no arguments are passed at all, i.e. set is always super-set of empty set.
-func (list *List) Contains(values ...interface{}) bool {
+func (list *List[V]) Contains(values ...V) bool {
 
 	if len(values) == 0 {
 		return true
@@ -169,16 +169,16 @@ func (list *List) Contains(values ...interface{}) bool {
 }
 
 // Values returns all elements in the list.
-func (list *List) Values() []interface{} {
-	values := make([]interface{}, list.size, list.size)
+func (list *List[V]) Values() []V {
+	values := make([]V, list.size, list.size)
 	for e, element := 0, list.first; element != nil; e, element = e+1, element.next {
 		values[e] = element.value
 	}
 	return values
 }
 
-//IndexOf returns index of provided element
-func (list *List) IndexOf(value interface{}) int {
+// IndexOf returns index of provided element
+func (list *List[V]) IndexOf(value V) int {
 	if list.size == 0 {
 		return -1
 	}
@@ -191,24 +191,24 @@ func (list *List) IndexOf(value interface{}) int {
 }
 
 // Empty returns true if list does not contain any elements.
-func (list *List) Empty() bool {
+func (list *List[V]) Empty() bool {
 	return list.size == 0
 }
 
 // Size returns number of elements within the list.
-func (list *List) Size() int {
+func (list *List[V]) Size() int {
 	return list.size
 }
 
 // Clear removes all elements from the list.
-func (list *List) Clear() {
+func (list *List[V]) Clear() {
 	list.size = 0
 	list.first = nil
 	list.last = nil
 }
 
 // Sort sorts values (in-place) using.
-func (list *List) Sort(comparator utils.Comparator) {
+func (list *List[V]) Sort(comparator utils.Comparator) {
 
 	if list.size < 2 {
 		return
@@ -224,9 +224,9 @@ func (list *List) Sort(comparator utils.Comparator) {
 }
 
 // Swap swaps values of two elements at the given indices.
-func (list *List) Swap(i, j int) {
+func (list *List[V]) Swap(i, j int) {
 	if list.withinRange(i) && list.withinRange(j) && i != j {
-		var element1, element2 *element
+		var element1, element2 *element[V]
 		for e, currentElement := 0, list.first; element1 == nil || element2 == nil; e, currentElement = e+1, currentElement.next {
 			switch e {
 			case i:
@@ -242,7 +242,7 @@ func (list *List) Swap(i, j int) {
 // Insert inserts values at specified index position shifting the value at that position (if any) and any subsequent elements to the right.
 // Does not do anything if position is negative or bigger than list's size
 // Note: position equal to list's size is valid, i.e. append.
-func (list *List) Insert(index int, values ...interface{}) {
+func (list *List[V]) Insert(index int, values ...V) {
 
 	if !list.withinRange(index) {
 		// Append
@@ -254,8 +254,8 @@ func (list *List) Insert(index int, values ...interface{}) {
 
 	list.size += len(values)
 
-	var beforeElement *element
-	var foundElement *element
+	var beforeElement *element[V]
+	var foundElement *element[V]
 	// determine traversal direction, last to first or first to last
 	if list.size-index < index {
 		foundElement = list.last
@@ -272,7 +272,7 @@ func (list *List) Insert(index int, values ...interface{}) {
 	if foundElement == list.first {
 		oldNextElement := list.first
 		for i, value := range values {
-			newElement := &element{value: value}
+			newElement := &element[V]{value: value}
 			if i == 0 {
 				list.first = newElement
 			} else {
@@ -286,7 +286,7 @@ func (list *List) Insert(index int, values ...interface{}) {
 	} else {
 		oldNextElement := beforeElement.next
 		for _, value := range values {
-			newElement := &element{value: value}
+			newElement := &element[V]{value: value}
 			newElement.prev = beforeElement
 			beforeElement.next = newElement
 			beforeElement = newElement
@@ -299,7 +299,7 @@ func (list *List) Insert(index int, values ...interface{}) {
 // Set value at specified index position
 // Does not do anything if position is negative or bigger than list's size
 // Note: position equal to list's size is valid, i.e. append.
-func (list *List) Set(index int, value interface{}) {
+func (list *List[V]) Set(index int, value V) {
 
 	if !list.withinRange(index) {
 		// Append
@@ -309,7 +309,7 @@ func (list *List) Set(index int, value interface{}) {
 		return
 	}
 
-	var foundElement *element
+	var foundElement *element[V]
 	// determine traversal direction, last to first or first to last
 	if list.size-index < index {
 		foundElement = list.last
@@ -328,7 +328,7 @@ func (list *List) Set(index int, value interface{}) {
 }
 
 // String returns a string representation of container
-func (list *List) String() string {
+func (list *List[V]) String() string {
 	str := "DoublyLinkedList\n"
 	values := []string{}
 	for element := list.first; element != nil; element = element.next {
@@ -339,6 +339,6 @@ func (list *List) String() string {
 }
 
 // Check that the index is within bounds of the list
-func (list *List) withinRange(index int) bool {
+func (list *List[V]) withinRange(index int) bool {
 	return index >= 0 && index < list.size
 }

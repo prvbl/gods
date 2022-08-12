@@ -6,21 +6,22 @@ package doublylinkedlist
 
 import (
 	"encoding/json"
+
 	"github.com/emirpasic/gods/containers"
 )
 
 // Assert Serialization implementation
-var _ containers.JSONSerializer = (*List)(nil)
-var _ containers.JSONDeserializer = (*List)(nil)
+var _ containers.JSONSerializer = (*List[string])(nil)
+var _ containers.JSONDeserializer = (*List[string])(nil)
 
 // ToJSON outputs the JSON representation of list's elements.
-func (list *List) ToJSON() ([]byte, error) {
+func (list *List[V]) ToJSON() ([]byte, error) {
 	return json.Marshal(list.Values())
 }
 
 // FromJSON populates list's elements from the input JSON representation.
-func (list *List) FromJSON(data []byte) error {
-	elements := []interface{}{}
+func (list *List[V]) FromJSON(data []byte) error {
+	elements := []V{}
 	err := json.Unmarshal(data, &elements)
 	if err == nil {
 		list.Clear()
@@ -30,11 +31,11 @@ func (list *List) FromJSON(data []byte) error {
 }
 
 // UnmarshalJSON @implements json.Unmarshaler
-func (list *List) UnmarshalJSON(bytes []byte) error {
+func (list *List[V]) UnmarshalJSON(bytes []byte) error {
 	return list.FromJSON(bytes)
 }
 
 // MarshalJSON @implements json.Marshaler
-func (list *List) MarshalJSON() ([]byte, error) {
+func (list *List[V]) MarshalJSON() ([]byte, error) {
 	return list.ToJSON()
 }

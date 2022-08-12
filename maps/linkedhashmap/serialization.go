@@ -7,16 +7,17 @@ package linkedhashmap
 import (
 	"bytes"
 	"encoding/json"
+
 	"github.com/emirpasic/gods/containers"
 	"github.com/emirpasic/gods/utils"
 )
 
 // Assert Serialization implementation
-var _ containers.JSONSerializer = (*Map)(nil)
-var _ containers.JSONDeserializer = (*Map)(nil)
+var _ containers.JSONSerializer = (*Map[string, any])(nil)
+var _ containers.JSONDeserializer = (*Map[string, any])(nil)
 
 // ToJSON outputs the JSON representation of map.
-func (m *Map) ToJSON() ([]byte, error) {
+func (m *Map[K, V]) ToJSON() ([]byte, error) {
 	var b []byte
 	buf := bytes.NewBuffer(b)
 
@@ -54,7 +55,7 @@ func (m *Map) ToJSON() ([]byte, error) {
 }
 
 // FromJSON populates map from the input JSON representation.
-//func (m *Map) FromJSON(data []byte) error {
+// func (m *Map[K, V) FromJSON(data []byte) error {
 //	elements := make(map[string]interface{})
 //	err := json.Unmarshal(data, &elements)
 //	if err == nil {
@@ -64,18 +65,18 @@ func (m *Map) ToJSON() ([]byte, error) {
 //		}
 //	}
 //	return err
-//}
+// }
 
 // FromJSON populates map from the input JSON representation.
-func (m *Map) FromJSON(data []byte) error {
-	elements := make(map[string]interface{})
+func (m *Map[K, V]) FromJSON(data []byte) error {
+	elements := make(map[K]V)
 	err := json.Unmarshal(data, &elements)
 	if err != nil {
 		return err
 	}
 
-	index := make(map[string]int)
-	var keys []interface{}
+	index := make(map[K]int)
+	var keys []K
 	for key := range elements {
 		keys = append(keys, key)
 		esc, _ := json.Marshal(key)
@@ -83,8 +84,8 @@ func (m *Map) FromJSON(data []byte) error {
 	}
 
 	byIndex := func(a, b interface{}) int {
-		key1 := a.(string)
-		key2 := b.(string)
+		key1 := a.(K)
+		key2 := b.(K)
 		index1 := index[key1]
 		index2 := index[key2]
 		return index1 - index2
@@ -95,18 +96,18 @@ func (m *Map) FromJSON(data []byte) error {
 	m.Clear()
 
 	for _, key := range keys {
-		m.Put(key, elements[key.(string)])
+		m.Put(key, elements[key])
 	}
 
 	return nil
 }
 
 // UnmarshalJSON @implements json.Unmarshaler
-func (m *Map) UnmarshalJSON(bytes []byte) error {
+func (m *Map[K, V]) UnmarshalJSON(bytes []byte) error {
 	return m.FromJSON(bytes)
 }
 
 // MarshalJSON @implements json.Marshaler
-func (m *Map) MarshalJSON() ([]byte, error) {
+func (m *Map[K, V]) MarshalJSON() ([]byte, error) {
 	return m.ToJSON()
 }
